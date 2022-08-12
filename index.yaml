@@ -3,16 +3,16 @@ entries:
   cloudtread-kubex:
   - apiVersion: v2
     appVersion: 1.16.0
-    created: "2022-08-12T04:39:21.024732+04:00"
+    created: "2022-08-12T21:25:58.981773+04:00"
     dependencies:
     - name: prometheus
       repository: https://prometheus-community.github.io/helm-charts
       version: 15.10.4
     description: A Helm chart for Kubernetes
-    digest: 5431b85e7cf1bbd13495e36d201543712fc2c62fbec6c18dacd0a61b09345e7e
+    digest: 84c434851b21120fce495167ed5b0fc98b1b7a0fa8d8173458ed6f73ff45941a
     name: cloudtread-kubex
     type: application
     urls:
     - https://cloudthread.github.io/helm-charts/cloudtread-kubex-0.1.0.tgz
     version: 0.1.0
-generated: "2022-08-12T04:39:21.020033+04:00"
+generated: "2022-08-12T21:25:58.975783+04:00"
