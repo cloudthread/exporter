@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cloudtread-kubex.fullname" . }}
+  labels:
+    {{- include "cloudtread-kubex.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "cloudtread-kubex.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "cloudtread-kubex.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "cloudtread-kubex.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        {{- range tuple "metric" "pod" "node" }}
+          - name: {{ $.Chart.Name }}-{{ . }}
+            securityContext:
+              {{- toYaml $.Values.securityContext | nindent 14 }}
+            image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
+            imagePullPolicy: {{ $.Values.image.pullPolicy }}
+            resources:
+              {{- toYaml $.Values.resources | nindent 14 }}
+            args:
+              - {{ . }}
+            env:
+              - name: CLOUDTHREAD_ROLE_ARN
+                valueFrom:
+                  secretKeyRef:
+                    name: cloudthread-s3-creds
+                    key: role_arn
+              - name: CLOUDTHREAD_ROLE_EXTERNAL_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: cloudthread-s3-creds
+                    key: role_external_id
+              {{- if ($.Values.cloudthread.dst_bucket) }}
+              - name: CLOUDTHREAD_DST_BUCKET
+                valueFrom:
+                  secretKeyRef:
+                    name: cloudthread-s3-creds
+                    key: dst_bucket
+              {{- end }}
+              {{- if ($.Values.cloudthread.cluster_id) }}
+              - name: KUBERNETES_CLUSTER_ID
+                value: {{ $.Values.cloudthread.cluster_id }}
+              {{- end }}
+              {{- if ($.Values.cloudthread.region) }}
+              - name: CLOUDTHREAD_REGION
+                value: {{ $.Values.cloudthread.region }}
+              {{- end }}
+              {{- if ($.Values.cloudthread.log_group) }}
+              - name: CLOUDTHREAD_LOG_GROUP
+                value: {{ $.Values.cloudthread.log_group }}
+              {{- end }}
+              - name: CLOUDTHREAD_ORG_ID
+                value: "{{ $.Values.cloudthread.org_id}}"
+              - name: CLOUDTHREAD_STREAM_TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    name: cloudthread-s3-creds
+                    key: stream_token
+              {{- if ($.Values.cloudthread.key_id) }}
+              - name: CLOUDTHREAD_S3_KEY_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: cloudthread-s3-creds
+                    key: key_id
+              {{- end }}
+              {{- if ($.Values.cloudthread.key) }}
+              - name: CLOUDTHREAD_S3_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: cloudthread-s3-creds
+                    key: key
+              {{- end }}
+              - name: POD_NAMESPACE
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.namespace
+              - name: POD_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.name
+              - name: CLOUDTHREAD_EXPORTER_NAME
+                value: {{ . }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
